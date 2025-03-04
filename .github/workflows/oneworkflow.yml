@@ -1,4 +1,4 @@
-name: testing in ${{github.ref_name}}
+name: testing 
 run-name: oneworkflow
 on: 
     push: 
