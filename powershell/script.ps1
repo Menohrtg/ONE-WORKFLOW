@@ -1,1 +1,1 @@
-Write-Host " Running from the development branch"
+Write-Host " Running from the main branch"
