@@ -25,15 +25,15 @@ jobs:
               run: |
                 Compress-Archive -Path testfile.txt -DestinationPath testfile.zip
 
-            - name: Commit and Push the zip file
-              run: |
-                git config --global user.name "github-actions"
-                git config --global user.email "github-actions@github.com"
-                git add testfile.zip
-                git commit -m "Added zipped test file"
-                git push
-              env:
-                GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+            # - name: Commit and Push the zip file
+            #   run: |
+            #     git config --global user.name "github-actions"
+            #     git config --global user.email "github-actions@github.com"
+            #     git add testfile.zip
+            #     git commit -m "Added zipped test file"
+            #     git push
+            #   env:
+            #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     Deploy:
         needs: Build
