@@ -1,19 +1,70 @@
 name: testing
 run-name: oneworkflow
+
 on: 
     push: 
         branches: 
             - main 
             - development
     workflow_dispatch: 
+
 jobs:
-     Build:
+    Build:
         runs-on: windows-latest
         steps:
-            - name: checkout 
+            - name: Checkout only the triggered branch
               uses: actions/checkout@v3
               with:
-                ref: ${{github.ref_name}}
-            - name: Run powershell script
+                ref: ${{ github.ref_name }}
+
+            - name: Create a file and add a sentence
               run: |
-                powershell/script.ps1
+                echo "This is a test sentence created by GitHub Actions." > testfile.txt
+
+            - name: Zip the file
+              run: |
+                Compress-Archive -Path testfile.txt -DestinationPath testfile.zip
+
+            - name: Commit and Push the zip file
+              run: |
+                git config --global user.name "github-actions"
+                git config --global user.email "github-actions@github.com"
+                git add testfile.zip
+                git commit -m "Added zipped test file"
+                git push
+              env:
+                GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    Deploy:
+        needs: Build
+        runs-on: windows-latest
+        environment:
+            name: ${{ github.ref_name == 'main' && 'PRODUCTION' || 'DEVELOPMENT' }}
+
+        steps:
+            - name: Checkout Repository
+              uses: actions/checkout@v3
+              with:
+                ref: ${{ github.ref_name }}
+
+            - name: Login to Azure
+              uses: azure/login@v1
+              with:
+                creds: ${{ secrets.APPDEV_GITHUB_DEV }}
+
+            - name: Select Web App based on branch
+              run: |
+                if ("${{ github.ref_name }}" -eq "main") {
+                    echo "WEBAPP_NAME=${{ secrets.WEBAPP_PROD }}" >> $env:GITHUB_ENV
+                } else {
+                    echo "WEBAPP_NAME=${{ secrets.WEBAPP_DEV }}" >> $env:GITHUB_ENV
+                }
+
+            - name: Deploy to Azure Web App
+              uses: azure/webapps-deploy@v2
+              with:
+                app-name: ${{ env.WEBAPP_NAME }}
+                package: testfile.zip
+
+            - name: Logout from Azure
+              run: az logout
